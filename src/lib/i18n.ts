@@ -3,8 +3,6 @@ export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = "fr";
 
-export type Dictionary = typeof dictionaries.fr;
-
 const dictionaries = {
   fr: {
     meta: {
@@ -367,6 +365,8 @@ const dictionaries = {
     },
   },
 } as const;
+
+export type Dictionary = (typeof dictionaries)[Locale];
 
 export function isLocale(value: string): value is Locale {
   return locales.includes(value as Locale);

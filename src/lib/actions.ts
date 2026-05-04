@@ -241,7 +241,7 @@ export async function createOrderAction(locale: Locale, formData: FormData) {
 
     for (const item of parsed.data.items) {
       totalAmount += item.quantity * item.unitPrice;
-      if (item.lotId && ![OrderStatus.DRAFT, OrderStatus.CANCELLED].includes(parsed.data.status)) {
+      if (item.lotId && parsed.data.status !== OrderStatus.DRAFT && parsed.data.status !== OrderStatus.CANCELLED) {
         const lot = await tx.stockLot.findUnique({ where: { id: item.lotId } });
         if (!lot || lot.quantityAvailable < item.quantity) {
           redirect(withMessage(`/${locale}/orders`, "invalid_form", "error"));
@@ -271,7 +271,7 @@ export async function createOrderAction(locale: Locale, formData: FormData) {
     });
 
     for (const item of parsed.data.items) {
-      if (item.lotId && ![OrderStatus.DRAFT, OrderStatus.CANCELLED].includes(parsed.data.status)) {
+      if (item.lotId && parsed.data.status !== OrderStatus.DRAFT && parsed.data.status !== OrderStatus.CANCELLED) {
         const lot = await tx.stockLot.findUniqueOrThrow({ where: { id: item.lotId } });
         const quantityAvailable = lot.quantityAvailable - item.quantity;
         await tx.stockLot.update({
