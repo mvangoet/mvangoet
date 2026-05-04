@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  COMMERCIAL
+  LOGISTICS
+  FINANCE
+}
+
+enum PartnerType {
+  SUPPLIER
+  CUSTOMER
+}
+
+enum LotStatus {
+  AVAILABLE
+  RESERVED
+  LOW_STOCK
+  EXPIRED
+  SOLD
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum InvoiceType {
+  QUOTE
+  INVOICE
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum ShipmentStatus {
+  PLANNED
+  IN_TRANSIT
+  CUSTOMS
+  DELIVERED
+  DELAYED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
+}
+
+model Partner {
+  id               String      @id @default(cuid())
+  type             PartnerType
+  name             String
+  country          String
+  email            String?
+  phone            String?
+  address          String
+  notes            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  suppliedLots     StockLot[]  @relation("SupplierLots")
+  customerOrders   Order[]     @relation("CustomerOrders")
+  customerInvoices Invoice[]   @relation("CustomerInvoices")
+}
+
+model StockLot {
+  id                String      @id @default(cuid())
+  lotNumber         String      @unique
+  supplierId        String
+  supplier          Partner     @relation("SupplierLots", fields: [supplierId], references: [id])
+  productionDate    DateTime
+  expirationDate    DateTime
+  quantityReceived  Float
+  quantityAvailable Float
+  status            LotStatus   @default(AVAILABLE)
+  notes             String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  orderItems        OrderItem[]
+}
+
+model Order {
+  id           String       @id @default(cuid())
+  orderNumber  String       @unique
+  customerId   String
+  customer     Partner      @relation("CustomerOrders", fields: [customerId], references: [id])
+  orderDate    DateTime
+  status       OrderStatus  @default(DRAFT)
+  currency     String
+  totalAmount  Float
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  items        OrderItem[]
+  invoices     Invoice[]
+  shipments    Shipment[]
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lotId       String?
+  lot         StockLot? @relation(fields: [lotId], references: [id])
+  productName String
+  quantity    Float
+  unitPrice   Float
+  lineTotal   Float
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  type          InvoiceType
+  orderId       String?
+  order         Order?        @relation(fields: [orderId], references: [id])
+  customerId    String
+  customer      Partner       @relation("CustomerInvoices", fields: [customerId], references: [id])
+  issueDate     DateTime
+  dueDate       DateTime
+  paymentStatus PaymentStatus @default(PENDING)
+  currency      String
+  subtotal      Float
+  total         Float
+  paidAmount    Float         @default(0)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Shipment {
+  id             String         @id @default(cuid())
+  shipmentNumber String         @unique
+  orderId        String?
+  order          Order?         @relation(fields: [orderId], references: [id])
+  carrier        String
+  trackingNumber String
+  shippedAt      DateTime
+  eta            DateTime?
+  status         ShipmentStatus @default(PLANNED)
+  documents      Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  entityType  String
+  entityId    String
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+}
