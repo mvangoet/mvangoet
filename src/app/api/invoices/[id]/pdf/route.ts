@@ -37,7 +37,8 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   page.drawText(`Linked order: ${invoice.order?.orderNumber ?? "N/A"}`, { x: 50, y: 580, font, size: 12 });
 
   if (invoice.notes) {
-    page.drawText(`Notes: ${invoice.notes}`, { x: 50, y: 540, font, size: 12, maxWidth: 480, lineHeight: 16 });
+    const notes = invoice.notes.replace(/\r\n/g, "\n").replace(/[^\S\n]+/g, " ").slice(0, 600);
+    page.drawText(`Notes:\n${notes}`, { x: 50, y: 540, font, size: 12, maxWidth: 480, lineHeight: 16 });
   }
 
   const bytes = await pdf.save();

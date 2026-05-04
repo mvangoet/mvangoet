@@ -34,7 +34,7 @@ export default async function LoginPage({ params, searchParams }: Props) {
   const action = loginAction.bind(null, locale);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-10">
+    <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="grid w-full max-w-5xl gap-6 overflow-hidden rounded-[2rem] border border-emerald-100 bg-white shadow-2xl lg:grid-cols-[1.05fr_0.95fr]">
         <div className="bg-emerald-950 p-8 text-white lg:p-10">
           <p className="text-sm uppercase tracking-[0.3em] text-emerald-200">The Avocado Sphere</p>
@@ -58,6 +58,6 @@ export default async function LoginPage({ params, searchParams }: Props) {
           <LoginForm dictionary={dictionary} action={action} />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

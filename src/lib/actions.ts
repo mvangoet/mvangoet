@@ -234,6 +234,15 @@ export async function createOrderAction(locale: Locale, formData: FormData) {
     redirect(withMessage(`/${locale}/orders`, "invalid_form", "error"));
   }
 
+  for (const item of parsed.data.items) {
+    if (item.lotId && parsed.data.status !== OrderStatus.DRAFT && parsed.data.status !== OrderStatus.CANCELLED) {
+      const lot = await prisma.stockLot.findUnique({ where: { id: item.lotId } });
+      if (!lot || lot.quantityAvailable < item.quantity) {
+        redirect(withMessage(`/${locale}/orders`, "invalid_form", "error"));
+      }
+    }
+  }
+
   await prisma.$transaction(async (tx) => {
     const latest = await tx.order.findFirst({ orderBy: { createdAt: "desc" } });
     const orderNumber = nextDocumentNumber("ORD", latest?.orderNumber ?? null);
@@ -241,12 +250,6 @@ export async function createOrderAction(locale: Locale, formData: FormData) {
 
     for (const item of parsed.data.items) {
       totalAmount += item.quantity * item.unitPrice;
-      if (item.lotId && parsed.data.status !== OrderStatus.DRAFT && parsed.data.status !== OrderStatus.CANCELLED) {
-        const lot = await tx.stockLot.findUnique({ where: { id: item.lotId } });
-        if (!lot || lot.quantityAvailable < item.quantity) {
-          redirect(withMessage(`/${locale}/orders`, "invalid_form", "error"));
-        }
-      }
     }
 
     const order = await tx.order.create({

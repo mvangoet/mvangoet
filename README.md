@@ -146,3 +146,5 @@ npm run test
 npm run db:push
 npm run db:seed
 ```
+
+Le MVP est prêt pour une extension future vers PostgreSQL, NestJS ou un design system plus complet si besoin.
